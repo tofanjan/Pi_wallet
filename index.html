@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pi Network Wallet</title>
+    <style>
+        :root {
+            --primary-color: #14f195;
+            --secondary-color: #9945ff;
+            --gradient: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            --text-color: #2d3748;
+            --light-text: #718096;
+            --success-color: #48bb78;
+            --error-color: #f56565;
+            --border-radius: 16px;
+            --box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            --glass-effect: rgba(255, 255, 255, 0.15);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #f5f7fa 0%, #e4e8f0 100%);
+            color: var(--text-color);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 420px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: var(--gradient);
+            color: white;
+            padding: 30px 0;
+            text-align: center;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            box-shadow: var(--box-shadow);
+            position: relative;
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+            transform: rotate(30deg);
+            animation: shine 8s infinite linear;
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(30deg) translate(-10%, -10%); }
+            100% { transform: rotate(30deg) translate(10%, 10%); }
+        }
+        
+        .wallet-balance {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin: 20px 0;
+            text-align: center;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+        
+        .wallet-balance:hover {
+            transform: translateY(-5px);
+        }
+        
+        .wallet-balance::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 5px;
+            background: var(--gradient);
+        }
+        
+        .balance-amount {
+            font-size: 48px;
+            font-weight: 700;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin: 15px 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            letter-spacing: -1px;
+        }
+        
+        .pi-logo {
+            width: 44px;
+            height: 44px;
+            margin-right: 12px;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+        }
+        
+        .action-buttons {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 16px;
+            margin: 25px 0;
+        }
+        
+        .btn {
+            padding: 18px;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background-color: white;
+            box-shadow: var(--box-shadow);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .btn:hover::before {
+            opacity: 1;
+        }
+        
+        .btn-icon {
+            font-size: 28px;
+            margin-bottom: 10px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .btn-primary {
+            background: var(--gradient);
+            color: white;
+        }
+        
+        .btn-primary .btn-icon {
+            background: white;
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .receive-section, .send-section {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin: 20px 0;
+            box-shadow: var(--box-shadow);
+            display: none;
+            animation: fadeIn 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .wallet-address {
+            background-color: #f8fafc;
+            padding: 18px;
+            border-radius: var(--border-radius);
+            font-family: 'Fira Code', 'Courier New', monospace;
+            word-break: break-all;
+            margin: 20px 0;
+            border: 1px dashed #cbd5e0;
+            font-size: 14px;
+            color: var(--text-color);
+            position: relative;
+            transition: all 0.3s;
+        }
+        
+        .wallet-address:hover {
+            background-color: #edf2f7;
+            border-color: var(--primary-color);
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 20px auto;
+            background-color: #fff;
+            padding: 15px;
+            border: 1px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            transition: transform 0.3s;
+        }
+        
+        .qr-code:hover {
+            transform: scale(1.05);
+        }
+        
+        .transaction-history {
+            background-color: white;
+            border-radius: var(--border-radius);
+            padding: 25px;
+            box-shadow: var(--box-shadow);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: var(--light-text);
+        }
+        
+        .empty-state-icon {
+            font-size: 60px;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 20px;
+            opacity: 0.7;
+        }
+        
+        .notification {
+            position: fixed;
+            bottom: 25px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 16px 32px;
+            border-radius: var(--border-radius);
+            font-weight: 500;
+            z-index: 1000;
+            display: none;
+            animation: slideUp 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+            backdrop-filter: blur(10px);
+            background-color: rgba(255,255,255,0.9);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        @keyframes slideUp {
+            from { bottom: -100px; opacity: 0; }
+            to { bottom: 25px; opacity: 1; }
+        }
+        
+        .notification.success {
+            color: var(--success-color);
+            border-left: 5px solid var(--success-color);
+        }
+        
+        .notification.error {
+            color: var(--error-color);
+            border-left: 5px solid var(--error-color);
+        }
+        
+        .language-switcher {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.3);
+            border-radius: 20px;
+            padding: 6px 12px;
+            font-size: 13px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            border: 1px solid rgba(255,255,255,0.2);
+            transition: all 0.3s;
+            color: white;
+            font-weight: 500;
+        }
+        
+        .language-switcher:hover {
+            background: rgba(255,255,255,0.4);
+            transform: translateY(-2px);
+        }
+        
+        .form-group {
+            margin-bottom: 24px;
+            position: relative;
+        }
+        
+        .form-label {
+            display: block;
+            margin-bottom: 10px;
+            font-weight: 600;
+            color: var(--text-color);
+        }
+        
+        .form-input {
+            width: 100%;
+            padding: 15px 20px;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: all 0.3s;
+            background-color: #f8fafc;
+        }
+        
+        .form-input:focus {
+            border-color: var(--primary-color);
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(20, 241, 149, 0.2);
+            background-color: white;
+        }
+        
+        .submit-btn {
+            width: 100%;
+            padding: 16px;
+            background: var(--gradient);
+            color: white;
+            border: none;
+            border-radius: var(--border-radius);
+            font-weight: 600;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            box-shadow: 0 5px 15px rgba(20, 241, 149, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .submit-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(20, 241, 149, 0.4);
+        }
+        
+        .submit-btn::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(255,255,255,0.3) 0%, rgba(255,255,255,0) 100%);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        
+        .submit-btn:hover::after {
+            opacity: 1;
+        }
+        
+        .close-btn {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: none;
+            border: none;
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--light-text);
+            transition: all 0.3s;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+        
+        .close-btn:hover {
+            background-color: #f8fafc;
+            color: var(--error-color);
+            transform: rotate(90deg);
+        }
+        
+        /* Floating Pi coins animation */
+        .floating-coins {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        
+        .coin {
+            position: absolute;
+            background-image: url('https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Pi_symbol.svg/1200px-Pi_symbol.svg.png');
+            background-size: contain;
+            background-repeat: no-repeat;
+            opacity: 0.1;
+            animation: float linear infinite;
+        }
+        
+        @keyframes float {
+            0% { transform: translateY(0) rotate(0deg); }
+            100% { transform: translateY(-100vh) rotate(360deg); }
+        }
+        
+        /* Responsive adjustments */
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .balance-amount {
+                font-size: 40px;
+            }
+            
+            .btn {
+                padding: 16px;
+            }
+        }
+    </style>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code&display=swap" rel="stylesheet">
+</head>
+<body>
+    <div class="floating-coins" id="floatingCoins"></div>
+    
+    <header>
+        <div class="container">
+            <div class="language-switcher">
+                <i class="fas fa-globe"></i> EN
+            </div>
+            <h1>Pi Network Wallet</h1>
+            <p>Your secure Pi cryptocurrency wallet</p>
+        </div>
+    </header>
+    
+    <div class="container">
+        <div class="wallet-balance">
+            <h2>Your Balance</h2>
+            <div class="balance-amount">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Pi_symbol.svg/1200px-Pi_symbol.svg.png" alt="Pi Logo" class="pi-logo">
+                0.00 π
+            </div>
+            <p>≈ $0.00 USD</p>
+        </div>
+        
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="sendBtn">
+                <span class="btn-icon"><i class="fas fa-paper-plane"></i></span>
+                Send Pi
+            </button>
+            <button class="btn btn-primary" id="receiveBtn">
+                <span class="btn-icon"><i class="fas fa-qrcode"></i></span>
+                Receive Pi
+            </button>
+            <button class="btn">
+                <span class="btn-icon"><i class="fas fa-chart-line"></i></span>
+                Mining Stats
+            </button>
+            <button class="btn">
+                <span class="btn-icon"><i class="fas fa-cog"></i></span>
+                Settings
+            </button>
+        </div>
+        
+        <!-- Receive Section -->
+        <div class="receive-section" id="receiveSection">
+            <h2>Receive Pi</h2>
+            <p>Share this address to receive Pi payments</p>
+            
+            <div class="qr-code">
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=MD5HGPHVL73EBDUD2Z4K2VDRLUBC4FFN7GOBLKPK6OPPXH6TED4TQAAAAGK2PHNAEUZH6" alt="Pi Wallet Address QR Code">
+            </div>
+            
+            <div class="wallet-address" id="walletAddress">
+                MD5HGPHVL73EBDUD2Z4K2VDRLUBC4FFN7GOBLKPK6OPPXH6TED4TQAAAAGK2PHNAEUZH6
+            </div>
+            
+            <button class="btn btn-primary" id="copyBtn" style="width: 100%;">
+                <i class="fas fa-copy"></i> Copy Address
+            </button>
+        </div>
+        
+        <!-- Send Section -->
+        <div class="send-section" id="sendSection">
+            <button class="close-btn" id="closeSendBtn">&times;</button>
+            <h2>Send Pi</h2>
+            
+            <form id="sendForm">
+                <div class="form-group">
+                    <label for="amount" class="form-label">Amount (π)</label>
+                    <input type="number" id="amount" class="form-input" placeholder="0.00" step="0.01" min="0.01" required>
+                </div>
+                
+                <div class="form-group">
+                    <label for="recipient" class="form-label">Recipient Address</label>
+                    <input type="text" id="recipient" class="form-input" placeholder="Enter Pi wallet address" required>
+                </div>
+                
+                <button type="submit" class="submit-btn">
+                    <i class="fas fa-paper-plane"></i> Send Pi
+                </button>
+            </form>
+        </div>
+        
+        <div class="transaction-history">
+            <h2>Transaction History</h2>
+            
+            <div class="empty-state">
+                <div class="empty-state-icon">
+                    <i class="fas fa-exchange-alt"></i>
+                </div>
+                <p>No transactions yet</p>
+                <p>Share your address to receive Pi</p>
+            </div>
+        </div>
+    </div>
+    
+    <div id="notification" class="notification">
+        Notification message
+    </div>
+    
+    <script>
+        // DOM Elements
+        const receiveBtn = document.getElementById('receiveBtn');
+        const sendBtn = document.getElementById('sendBtn');
+        const receiveSection = document.getElementById('receiveSection');
+        const sendSection = document.getElementById('sendSection');
+        const closeSendBtn = document.getElementById('closeSendBtn');
+        const copyBtn = document.getElementById('copyBtn');
+        const walletAddress = document.getElementById('walletAddress');
+        const notification = document.getElementById('notification');
+        const sendForm = document.getElementById('sendForm');
+        const floatingCoins = document.getElementById('floatingCoins');
+        
+        // Create floating coins animation
+        function createCoins() {
+            const coinsCount = 15;
+            for (let i = 0; i < coinsCount; i++) {
+                const coin = document.createElement('div');
+                coin.className = 'coin';
+                
+                // Random size between 20px and 50px
+                const size = Math.random() * 30 + 20;
+                coin.style.width = `${size}px`;
+                coin.style.height = `${size}px`;
+                
+                // Random position
+                coin.style.left = `${Math.random() * 100}%`;
+                coin.style.bottom = `-${size}px`;
+                
+                // Random animation duration between 10s and 30s
+                const duration = Math.random() * 20 + 10;
+                coin.style.animationDuration = `${duration}s`;
+                
+                // Random delay
+                coin.style.animationDelay = `${Math.random() * 5}s`;
+                
+                floatingCoins.appendChild(coin);
+            }
+        }
+        
+        // Initialize floating coins
+        createCoins();
+        
+        // Toggle receive section
+        receiveBtn.addEventListener('click', function() {
+            receiveSection.style.display = receiveSection.style.display === 'block' ? 'none' : 'block';
+            if (receiveSection.style.display === 'block') {
+                sendSection.style.display = 'none';
+            }
+        });
+        
+        // Toggle send section
+        sendBtn.addEventListener('click', function() {
+            sendSection.style.display = sendSection.style.display === 'block' ? 'none' : 'block';
+            if (sendSection.style.display === 'block') {
+                receiveSection.style.display = 'none';
+            }
+        });
+        
+        // Close send section
+        closeSendBtn.addEventListener('click', function() {
+            sendSection.style.display = 'none';
+        });
+        
+        // Copy address to clipboard with improved error handling
+        copyBtn.addEventListener('click', async function() {
+            const address = walletAddress.textContent.trim();
+            
+            try {
+                // Modern clipboard API
+                await navigator.clipboard.writeText(address);
+                showNotification('Address copied to clipboard!', 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                try {
+                    const textarea = document.createElement('textarea');
+                    textarea.value = address;
+                    textarea.style.position = 'fixed';  // Prevent scrolling to bottom
+                    document.body.appendChild(textarea);
+                    textarea.select();
+                    
+                    const successful = document.execCommand('copy');
+                    document.body.removeChild(textarea);
+                    
+                    if (successful) {
+                        showNotification('Address copied to clipboard!', 'success');
+                    } else {
+                        throw new Error('Copy command failed');
+                    }
+                } catch (err) {
+                    console.error('Copy failed:', err);
+                    showNotification('Failed to copy address. Please try again.', 'error');
+                }
+            }
+        });
+        
+        // Handle send form submission
+        sendForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const amount = document.getElementById('amount').value;
+            const recipient = document.getElementById('recipient').value;
+            
+            // Validate inputs
+            if (!amount || amount <= 0) {
+                showNotification('Please enter a valid amount', 'error');
+                return;
+            }
+            
+            if (!recipient || recipient.length < 10) {
+                showNotification('Please enter a valid recipient address', 'error');
+                return;
+            }
+            
+            // In a real app, you would send the transaction here
+            console.log(`Sending ${amount}π to ${recipient}`);
+            
+            // Show success message
+            showNotification(`Success! Sent ${amount}π to recipient`, 'success');
+            
+            // Reset form and hide section
+            sendForm.reset();
+            sendSection.style.display = 'none';
+        });
+        
+        // Show notification
+        function showNotification(message, type) {
+            notification.textContent = message;
+            notification.className = 'notification ' + type;
+            notification.style.display = 'block';
+            
+            setTimeout(() => {
+                notification.style.display = 'none';
+            }, 3000);
+        }
+        
+        // Close sections when clicking outside
+        document.addEventListener('click', function(event) {
+            if (!receiveSection.contains(event.target) && 
+                event.target !== receiveBtn && 
+                !receiveBtn.contains(event.target)) {
+                receiveSection.style.display = 'none';
+            }
+            
+            if (!sendSection.contains(event.target) && 
+                event.target !== sendBtn && 
+                !sendBtn.contains(event.target)) {
+                sendSection.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
